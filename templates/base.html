@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>校務管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">註冊組管理系統</a>
+            <div class="navbar-text text-white">
+                歡迎，{{ user.username }} ({{ user.is_superuser|yesno:"管理員,一般老師" }})
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+		{% if messages %}
+			{% for message in messages %}
+				<div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+					{{ message }}
+					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+				</div>
+			{% endfor %}
+		{% endif %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
