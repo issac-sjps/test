@@ -24,6 +24,11 @@ def index(request):
         
         return redirect('index') # 存完後刷新頁面
 
+    query = request.GET.get('q')
+    if request.user.is_superuser:
+        items = Subsidy.objects.all().order_by('-created_at') # 建議加個排序，新的在前
+    else:
+        items = Subsidy.objects.filter(recorder=request.user).order_by('-created_at')
     # 取得所有資料顯示在表格
     items = Subsidy.objects.all()
     
