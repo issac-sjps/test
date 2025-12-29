@@ -79,7 +79,7 @@
 
     <div class="mt-5 text-center">
         {% if user.is_authenticated %}
-            <form action="{% url 'logout' %}" method="post">
+            <form action="/admin/logout/" method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-secondary">登出系統 ({{ user.username }})</button>
             </form>
