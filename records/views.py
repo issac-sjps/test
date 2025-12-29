@@ -5,10 +5,12 @@ import csv
 from django.http import HttpResponse
 from django.contrib import messages
 
-@login_required
+
 def index(request):
     # 處理「新增資料」邏輯
     if request.method == "POST":
+        if not request.user.is_authenticated:
+            return redirect('login') #
         student_name = request.POST.get('student_name')
         amount = request.POST.get('amount')
         
