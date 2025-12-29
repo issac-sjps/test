@@ -1,5 +1,5 @@
-from django.shortcuts import render,redirect,get_object_or_404
-from django.contrib.auth.decorators import login_required,permission_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, permission_required
 from .models import Subsidy
 import csv
 from django.http import HttpResponse
@@ -7,7 +7,7 @@ from django.contrib import messages
 
 @login_required
 def index(request):
-    # 如果使用者按下「送出」按鈕
+    # --- 1. 處理「新增資料」 (POST) ---
     if request.method == "POST":
         student_name = request.POST.get('student_name')
         amount = request.POST.get('amount')
@@ -18,65 +18,51 @@ def index(request):
                 amount=amount,
                 recorder=request.user
             )
-            # 儲存後跳轉回首頁，確保頁面重新整理
-            return redirect('index')
+            messages.success(request, f"成功新增 {student_name} 的紀錄！")
+            return redirect('index') # 儲存完畢立刻跳轉，避免重複送出
 
-    # --- 以下程式碼必須退回一層，與第一個 if 對齊 ---
-    query = request.GET.get('q')
-    
-    if request.user.is_superuser:
-        items = Subsidy.objects.all().order_by('-created_at') # 建議加個排序，新的在前
-    else:
-        items = Subsidy.objects.filter(recorder=request.user).order_by('-created_at')
-    # 取得所有資料顯示在表格
-    items = Subsidy.objects.all()
-    
-    # 權限過濾邏輯
-    if request.user.is_superuser:
-        # 如果是管理員，取得所有資料
-        items = Subsidy.objects.all()
-    else:
-        # 如果是一般老師，只取得「recorder 是自己」的資料
-        items = Subsidy.objects.filter(recorder=request.user)
-    
-    return render(request, 'index.html', {'items': items})
-    
-@login_required
-@permission_required('records.delete_subsidy', raise_exception=True) # 雙重保險：沒權限的人禁止執行
-def delete_item(request, item_id):
-    item = get_object_or_404(Subsidy, id=item_id)
-    item.delete()
-    return redirect('index')
-    
-def index(request):
-    # 獲取搜尋關鍵字
+    # --- 2. 處理「顯示與搜尋」 (GET) ---
     query = request.GET.get('q') 
     
+    # 權限過濾：管理員看全部，老師看自己
     if request.user.is_superuser:
-        items = Subsidy.objects.all()
+        items = Subsidy.objects.all().order_by('-created_at')
     else:
-        items = Subsidy.objects.filter(recorder=request.user)
+        items = Subsidy.objects.filter(recorder=request.user).order_by('-created_at')
 
-    # 如果有輸入關鍵字，就過濾姓名
+    # 如果有搜尋關鍵字，再進一步過濾姓名
     if query:
         items = items.filter(student_name__icontains=query)
 
-    return render(request, 'index.html', {'items': items, 'query': query})
-    
+    return render(request, 'index.html', {
+        'items': items, 
+        'query': query
+    })
+
+@login_required
+@permission_required('records.delete_subsidy', raise_exception=True)
+def delete_item(request, item_id):
+    item = get_object_or_404(Subsidy, id=item_id)
+    item.delete()
+    messages.warning(request, "資料已刪除")
+    return redirect('index')
+
 @login_required
 def export_csv(request):
-    # 建立回應物件，告訴瀏覽器這是一個 CSV 檔
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="subsidy_report.csv"'
     
-    # 處理中文亂碼問題 (BOM)
+    # 處理中文亂碼 (BOM)
     response.write(u'\ufeff'.encode('utf8'))
     
     writer = csv.writer(response)
-    writer.writerow(['學生姓名', '金額', '登記人', '時間']) # 標題列
+    writer.writerow(['學生姓名', '金額', '登記人', '時間'])
 
-    # 只匯出該使用者看得到的資料
-    items = Subsidy.objects.all() if request.user.is_superuser else Subsidy.objects.filter(recorder=request.user)
+    # 匯出權限過濾
+    if request.user.is_superuser:
+        items = Subsidy.objects.all()
+    else:
+        items = Subsidy.objects.filter(recorder=request.user)
 
     for item in items:
         writer.writerow([item.student_name, item.amount, item.recorder.username, item.created_at])
