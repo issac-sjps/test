@@ -8,19 +8,18 @@ from django.contrib import messages
 @login_required
 def index(request):
     # 如果使用者按下「送出」按鈕
-   if request.method == "POST":
-        # 1. 抓取表單資料
-        name = request.POST.get('student_name')
-        amt = request.POST.get('amount')
+    if request.method == "POST":
+        # 這裡縮進 8 個空格
+        student_name = request.POST.get('student_name')
+        amount = request.POST.get('amount')
         
-        # 2. 只有在有資料時才儲存
-        if name and amt:
+        if student_name and amount:
             Subsidy.objects.create(
-                student_name=name,
-                amount=amt,
-                recorder=request.user  # 這裡確保紀錄屬於當前登入者
+                student_name=student_name,
+                amount=amount,
+                recorder=request.user
             )
-            # 3. 關鍵！儲存完一定要跳轉，網頁才會重新抓取最新資料
+            # 儲存後立即跳轉，這行必須縮進 12 個空格（在 if 裡面）
             return redirect('index')
 
     query = request.GET.get('q')
