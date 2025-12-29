@@ -8,21 +8,20 @@ from django.contrib import messages
 @login_required
 def index(request):
     # 如果使用者按下「送出」按鈕
-    if request.method == "POST":
-        student_name = request.POST.get('student_name')
-        amount = request.POST.get('amount')
+   if request.method == "POST":
+        # 1. 抓取表單資料
+        name = request.POST.get('student_name')
+        amt = request.POST.get('amount')
         
-        # 存入資料庫
-        Subsidy.objects.create(
-            student_name=student_name,
-            amount=amount,
-            recorder=request.user # 自動記錄目前登入的人
-        )
-        
-        messages.success(request, f'成功新增「{student_name}」的紀錄！')
-        
-        
-        return redirect('index') # 存完後刷新頁面
+        # 2. 只有在有資料時才儲存
+        if name and amt:
+            Subsidy.objects.create(
+                student_name=name,
+                amount=amt,
+                recorder=request.user  # 這裡確保紀錄屬於當前登入者
+            )
+            # 3. 關鍵！儲存完一定要跳轉，網頁才會重新抓取最新資料
+            return redirect('index')
 
     query = request.GET.get('q')
     if request.user.is_superuser:
