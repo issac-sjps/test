@@ -5,7 +5,6 @@ import csv
 from django.http import HttpResponse
 from django.contrib import messages
 
-
 def index(request):
     # 處理「新增資料」邏輯
     if request.method == "POST":

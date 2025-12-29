@@ -35,7 +35,7 @@
     </div>
     {% else %}
     <div class="alert alert-warning">
-        ⚠️ 目前為唯讀模式。若要新增或刪除紀錄，請先 <a href="{% url 'login' %}">點此登入系統</a>。
+        ⚠️ 目前為唯讀模式。若要新增或刪除紀錄，請先 <a href="/admin/login/">點此登入系統</a>。
     </div>
     {% endif %}
 
@@ -84,7 +84,7 @@
                 <button type="submit" class="btn btn-outline-secondary">登出系統 ({{ user.username }})</button>
             </form>
         {% else %}
-            <a href="{% url 'login' %}" class="btn btn-primary">管理員登入</a>
+            <a href="/admin/login/" class="btn btn-primary">管理員登入</a>
         {% endif %}
     </div>
 
