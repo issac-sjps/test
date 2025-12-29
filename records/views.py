@@ -7,7 +7,7 @@ from django.contrib import messages
 
 @login_required
 def index(request):
-    # --- 1. 處理「新增資料」 (POST) ---
+    # 處理「新增資料」邏輯
     if request.method == "POST":
         student_name = request.POST.get('student_name')
         amount = request.POST.get('amount')
@@ -18,11 +18,10 @@ def index(request):
                 amount=amount,
                 recorder=request.user
             )
-            messages.success(request, f"成功新增 {student_name} 的紀錄！")
-            return redirect('index') # 儲存完畢立刻跳轉，避免重複送出
+            return redirect('index') # 儲存完畢立刻跳轉
 
-    # --- 2. 處理「顯示與搜尋」 (GET) ---
-    query = request.GET.get('q') 
+    # 處理「顯示與搜尋」邏輯
+    query = request.GET.get('q')
     
     # 權限過濾：管理員看全部，老師看自己
     if request.user.is_superuser:
@@ -44,21 +43,17 @@ def index(request):
 def delete_item(request, item_id):
     item = get_object_or_404(Subsidy, id=item_id)
     item.delete()
-    messages.warning(request, "資料已刪除")
     return redirect('index')
 
 @login_required
 def export_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="subsidy_report.csv"'
-    
-    # 處理中文亂碼 (BOM)
-    response.write(u'\ufeff'.encode('utf8'))
+    response.write(u'\ufeff'.encode('utf8')) # 解決中文亂碼
     
     writer = csv.writer(response)
     writer.writerow(['學生姓名', '金額', '登記人', '時間'])
 
-    # 匯出權限過濾
     if request.user.is_superuser:
         items = Subsidy.objects.all()
     else:
