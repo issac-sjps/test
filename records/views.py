@@ -9,7 +9,6 @@ from django.contrib import messages
 def index(request):
     # 如果使用者按下「送出」按鈕
     if request.method == "POST":
-        # 這裡縮進 8 個空格
         student_name = request.POST.get('student_name')
         amount = request.POST.get('amount')
         
@@ -19,10 +18,12 @@ def index(request):
                 amount=amount,
                 recorder=request.user
             )
-            # 儲存後立即跳轉，這行必須縮進 12 個空格（在 if 裡面）
+            # 儲存後跳轉回首頁，確保頁面重新整理
             return redirect('index')
 
+    # --- 以下程式碼必須退回一層，與第一個 if 對齊 ---
     query = request.GET.get('q')
+    
     if request.user.is_superuser:
         items = Subsidy.objects.all().order_by('-created_at') # 建議加個排序，新的在前
     else:
