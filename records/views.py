@@ -6,31 +6,35 @@ from django.http import HttpResponse
 from django.contrib import messages
 
 def index(request):
-    # 處理「新增資料」邏輯
+    # 1. 處理「新增資料」 (只有登入者才能進來這區塊)
     if request.method == "POST":
         if not request.user.is_authenticated:
-            return redirect('login') #
+            return redirect('/admin/login/') # 沒登入的人想 POST，送去登入
+            
         student_name = request.POST.get('student_name')
         amount = request.POST.get('amount')
-        
         if student_name and amount:
             Subsidy.objects.create(
                 student_name=student_name,
                 amount=amount,
                 recorder=request.user
             )
-            return redirect('index') # 儲存完畢立刻跳轉
+            return redirect('index')
 
-    # 處理「顯示與搜尋」邏輯
+    # 2. 處理「搜尋與過濾」
     query = request.GET.get('q')
     
-    # 權限過濾：管理員看全部，老師看自己
-    if request.user.is_superuser:
-        items = Subsidy.objects.all().order_by('-created_at')
+    # --- 關鍵修正：判斷登入狀態 ---
+    if request.user.is_authenticated:
+        if request.user.is_superuser:
+            items = Subsidy.objects.all().order_by('-created_at')
+        else:
+            items = Subsidy.objects.filter(recorder=request.user).order_by('-created_at')
     else:
-        items = Subsidy.objects.filter(recorder=request.user).order_by('-created_at')
+        # 沒登入的人，我們讓他看「所有資料」或是「空的」？
+        # 建議讓他們看所有資料(唯讀)，否則畫面會是空的
+        items = Subsidy.objects.all().order_by('-created_at')
 
-    # 如果有搜尋關鍵字，再進一步過濾姓名
     if query:
         items = items.filter(student_name__icontains=query)
 
@@ -38,7 +42,8 @@ def index(request):
         'items': items, 
         'query': query
     })
-
+    
+    
 @login_required
 @permission_required('records.delete_subsidy', raise_exception=True)
 def delete_item(request, item_id):
